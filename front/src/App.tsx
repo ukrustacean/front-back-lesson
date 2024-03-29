@@ -5,7 +5,7 @@ import {useState} from "react";
 function TodoList(props: { todos: string[] }) {
     return (<>
         <ListGroup>
-            {props.todos.map(x => <ListGroupItem>{x}</ListGroupItem>)}
+            {props.todos.map((x, i) => <ListGroupItem key={i} >{x}</ListGroupItem>)}
         </ListGroup>
     </>)
 }
