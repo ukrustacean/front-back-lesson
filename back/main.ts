@@ -1,27 +1,53 @@
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 
-const PORT = 3000;
-const app = express();
+async function main() {
+    const PORT = 3000;
+    const app = express();
 
-app.use(express.text());
-app.use(cors());
+    await mongoose.connect('mongodb+srv://ukrustacean:31E1cDx8YRDyxVZk@cluster0.bntnbmd.mongodb.net/?retryWrites=true&w=majority');
+    const noteSchema = new mongoose.Schema({ note: String });
+    const Note = mongoose.model('Note', noteSchema);
 
-const DB: string[] = [];
+    app.use(express.text());
+    app.use(cors());
 
-app.get('/notes', (_req, res) => {
-    console.log(DB);
-    res.status(200).json({ notes: DB });
-    res.end();
-});
+    app.get('/notes', async (_req, res) => {
+        const notes = (await Note.find({}))
+            .map(x => x.note!);
+        console.log([...notes]);
 
-app.post('/note', (req, res) => {
-    const { note }: { note: string } = JSON.parse(req.body);
-    DB.push(note);
-    res.status(200);
-    res.end();
-});
+        res.status(200).json({ notes });
+        res.end();
+    });
 
-app.listen(PORT, () => {
-    console.log(`Example app listening on port ${PORT}`);
-});
+    app.post('/note', async (req, res) => {
+        const note: { note: string } = JSON.parse(req.body);
+        const newNote = new Note(note);
+
+        await newNote.save();
+        console.log('Saved new note!');
+
+        res.status(200);
+        res.end();
+    });
+
+    app.listen(PORT, () => {
+        console.log(`Example app listening on port ${PORT}`);
+    });
+
+    app.on('SIGTERM', () => {
+        mongoose.connection.close();
+    });
+
+    app.on('SIGKILL', () => {
+        mongoose.connection.close();
+    });
+
+    app.on('SIGINT', () => {
+        mongoose.connection.close();
+    });
+}
+
+main();
